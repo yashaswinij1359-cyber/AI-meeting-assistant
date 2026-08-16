@@ -1843,3 +1843,44 @@ footer strong {
   opacity: 1;
   color: #e74c3c;
 }
+/* MOBILE FIX */
+@media (max-width: 768px) {
+
+  html, body {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .app,
+  .dashboard,
+  .main-content {
+    height: auto !important;
+    min-height: 100vh;
+    overflow: visible !important;
+  }
+
+  .main-content {
+    padding-bottom: 40px;
+  }
+
+  /* Don't cut the Action Items */
+  .action-items,
+  .action-card,
+  .tasks,
+  .task-list {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Don't cut Recent Meetings */
+  .recent-meetings,
+  .meetings-section,
+  .recent-meetings-container {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
