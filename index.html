@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MeetFlow AI | Meeting-to-Action Assistant</title>
+
+    <meta
+        name="description"
+        content="AI-powered meeting assistant that converts meeting transcripts into summaries and actionable tasks."
+    >
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- ================= SIDEBAR ================= -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">
+                ✦
+            </div>
+
+            <div>
+                <h2>MeetFlow</h2>
+                <span>AI Assistant</span>
+            </div>
+        </div>
+
+        <nav class="navigation">
+
+            <a href="#home" class="nav-link active">
+                <span>⌂</span>
+                <span>Home</span>
+            </a>
+
+            <a href="#new-meeting" class="nav-link">
+                <span>＋</span>
+                <span>New Meeting</span>
+            </a>
+
+            <a href="#dashboard" class="nav-link">
+                <span>▦</span>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="#tasks" class="nav-link">
+                <span>✓</span>
+                <span>My Tasks</span>
+            </a>
+
+            <button
+                onclick="logout()"
+                class="nav-link"
+                style="width: 100%; text-align: left; background: none; border: none; cursor: pointer; font: inherit;">
+                <span>⏻</span>
+                <span>Log out</span>
+            </button>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="ai-status">
+                <span class="status-dot"></span>
+
+                <div>
+                    <strong>AI Assistant</strong>
+                    <small>Ready to analyze</small>
+                </div>
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+
+        <header class="topbar">
+
+            <div>
+                <div class="page-label">WORKSPACE</div>
+
+                <h1 id="pageTitle">
+                    Good evening 👋
+                </h1>
+
+                <p>
+                    Turn conversations into clear actions.
+                </p>
+            </div>
+
+            <div class="topbar-right">
+
+                <button
+                    class="icon-button"
+                    id="themeButton"
+                    title="Toggle theme">
+                    ◐
+                </button>
+
+                <div class="profile">
+
+                    <div class="avatar">
+                        👤
+                    </div>
+
+                    <div class="profile-info">
+                        <strong>My Workspace</strong>
+                        <span>Productivity</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- ================= HOME ================= -->
+
+        <section id="home">
+
+            <!-- HERO -->
+
+            <div class="hero">
+
+                <div class="hero-content">
+
+                    <div class="hero-badge">
+                        ✨ AI-POWERED PRODUCTIVITY
+                    </div>
+
+                    <h2>
+                        Turn meetings into
+                        <span>action.</span>
+                    </h2>
+
+                    <p>
+                        Paste your meeting transcript and let MeetFlow
+                        automatically identify summaries, action items,
+                        owners and deadlines.
+                    </p>
+
+                    <button
+                        class="hero-button"
+                        onclick="scrollToMeeting()">
+
+                        <span>＋</span>
+                        Start New Meeting
+
+                    </button>
+
+                </div>
+
+                <div class="hero-visual">
+
+                    <div class="floating-card card-one">
+                        <span>✓</span>
+                        <div>
+                            <strong>Action found</strong>
+                            <small>Review project design</small>
+                        </div>
+                    </div>
+
+                    <div class="ai-orb">
+                        <div class="orb-inner">
+                            ✦
+                        </div>
+                    </div>
+
+                    <div class="floating-card card-two">
+                        <span>⚡</span>
+                        <div>
+                            <strong>AI Analysis</strong>
+                            <small>Ready in seconds</small>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- STATISTICS -->
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon purple">
+                        ◫
+                    </div>
+
+                    <div>
+                        <span>Total Meetings</span>
+                        <strong id="meetingCount">0</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon blue">
+                        ✦
+                    </div>
+
+                    <div>
+                        <span>AI Analyses</span>
+                        <strong id="analysisCount">0</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon green">
+                        ✓
+                    </div>
+
+                    <div>
+                        <span>Completed Tasks</span>
+                        <strong id="completedCount">0</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon orange">
+                        ◷
+                    </div>
+
+                    <div>
+                        <span>Pending Tasks</span>
+                        <strong id="pendingCount">0</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= NEW MEETING ================= -->
+
+        <section
+            id="new-meeting"
+            class="workspace-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-label">
+                        AI WORKSPACE
+                    </span>
+
+                    <h2>
+                        New Meeting
+                    </h2>
+
+                    <p>
+                        Give your meeting a name and paste the transcript.
+                    </p>
+                </div>
+
+                <div class="step-indicator">
+                    <span class="step active">1</span>
+                    <span></span>
+                    <span class="step">2</span>
+                    <span></span>
+                    <span class="step">3</span>
+                </div>
+
+            </div>
+
+
+            <div class="meeting-layout">
+
+                <!-- INPUT -->
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <div class="panel-title">
+
+                            <div class="panel-icon">
+                                ✎
+                            </div>
+
+                            <div>
+                                <h3>Meeting Details</h3>
+                                <p>Enter your meeting information</p>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="meetingTitle">
+                            Meeting title
+                        </label>
+
+                        <input
+                            id="meetingTitle"
+                            type="text"
+                            placeholder="e.g. Weekly Product Meeting"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <div class="label-row">
+
+                            <label for="transcript">
+                                Meeting transcript
+                            </label>
+
+                            <span>
+                                AI will analyze this
+                            </span>
+
+                        </div>
+
+                        <textarea
+                            id="transcript"
+                            placeholder="Paste your meeting transcript here...
+
+Example:
+
+Priya will complete the UI design by Friday.
+Rahul will test the new login system tomorrow.
+The team will launch the beta version next Monday."
+                        ></textarea>
+
+                    </div>
+
+
+                    <div class="input-footer">
+
+                        <span id="characterCount">
+                            0 characters
+                        </span>
+
+                        <button
+                            id="clearButton"
+                            class="text-button"
+                            type="button">
+                            Clear
+                        </button>
+
+                    </div>
+
+
+                    <button
+                        id="analyzeButton"
+                        class="analyze-button"
+                        type="button">
+
+                        <span id="buttonIcon">✦</span>
+
+                        <span id="buttonText">
+                            Analyze Meeting
+                        </span>
+
+                    </button>
+
+                </div>
+
+
+                <!-- QUICK GUIDE -->
+
+                <div class="quick-panel">
+
+                    <div class="quick-header">
+                        <span>✦</span>
+                        <h3>What AI extracts</h3>
+                    </div>
+
+
+                    <div class="feature-item">
+
+                        <div class="feature-number">
+                            01
+                        </div>
+
+                        <div>
+                            <strong>Summary</strong>
+
+                            <p>
+                                Understand the main points discussed.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="feature-item">
+
+                        <div class="feature-number">
+                            02
+                        </div>
+
+                        <div>
+                            <strong>Action Items</strong>
+
+                            <p>
+                                Find tasks that need to be completed.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="feature-item">
+
+                        <div class="feature-number">
+                            03
+                        </div>
+
+                        <div>
+                            <strong>Owners & Deadlines</strong>
+
+                            <p>
+                                Identify who should do what and when.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="privacy-note">
+                        🔒 Your transcript stays inside your application.
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= RESULTS ================= -->
+
+        <section
+            id="results"
+            class="workspace-section results-section hidden">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-label">
+                        AI RESULT
+                    </span>
+
+                    <h2>
+                        Meeting Intelligence
+                    </h2>
+
+                    <p>
+                        Here's what MeetFlow found in your meeting.
+                    </p>
+                </div>
+
+                <div class="success-badge">
+                    ✓ Analysis complete
+                </div>
+
+            </div>
+
+
+            <div class="results-grid">
+
+                <!-- SUMMARY -->
+
+                <div class="result-panel summary-panel">
+
+                    <div class="result-header">
+
+                        <div class="result-icon">
+                            ✦
+                        </div>
+
+                        <div>
+                            <h3>Meeting Summary</h3>
+                            <span>AI-generated overview</span>
+                        </div>
+
+                    </div>
+
+                    <div id="summaryResult">
+                        Your meeting summary will appear here.
+                    </div>
+
+                </div>
+
+
+                <!-- ACTION ITEMS -->
+
+                <div
+                    class="result-panel tasks-panel"
+                    id="tasks">
+
+                    <div class="result-header">
+
+                        <div class="result-icon green-icon">
+                            ✓
+                        </div>
+
+                        <div>
+                            <h3>Action Items</h3>
+                            <span id="taskCount">
+                                0 tasks identified
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div id="actionItems">
+
+                        <div class="empty-state">
+                            No action items yet.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= DASHBOARD ================= -->
+
+        <section
+            id="dashboard"
+            class="workspace-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-label">
+                        OVERVIEW
+                    </span>
+
+                    <h2>
+                        Recent Meetings
+                    </h2>
+
+                    <p>
+                        Your latest analyzed meetings.
+                    </p>
+                </div>
+
+                <button
+                    class="outline-button"
+                    onclick="scrollToMeeting()">
+                    + New Meeting
+                </button>
+
+            </div>
+
+
+            <div id="recentMeetings" class="meetings-list">
+
+                <div class="empty-meetings">
+
+                    <div class="empty-icon">
+                        ◫
+                    </div>
+
+                    <h3>No meetings yet</h3>
+
+                    <p>
+                        Analyze your first meeting to see it here.
+                    </p>
+
+                    <button
+                        class="small-button"
+                        onclick="scrollToMeeting()">
+                        Start your first meeting
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- FOOTER -->
+
+        <footer>
+
+            <div>
+                <strong>MeetFlow AI</strong>
+                <span> • Meeting-to-Action Assistant</span>
+            </div>
+
+            <span>
+                Built for smarter productivity ✦
+            </span>
+
+        </footer>
+
+    </main>
+
+</div>
+
+
+<!-- ================= TOAST ================= -->
+
+<div id="toast" class="toast">
+    <span id="toastIcon">✓</span>
+    <span id="toastMessage">Success</span>
+</div>
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
