@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeetFlow AI | Log In</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .auth-wrapper {
+            max-width: 400px;
+            margin: 80px auto;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        .auth-wrapper h2 {
+            margin-bottom: 8px;
+        }
+        .auth-wrapper input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            box-sizing: border-box;
+        }
+        .auth-wrapper button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 12px;
+            cursor: pointer;
+        }
+        .auth-toggle {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+        .auth-error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+
+    <h2 id="formTitle">Log In</h2>
+    <p id="formSubtitle">Welcome back to MeetFlow AI</p>
+
+    <div id="nameField" style="display: none;">
+        <input type="text" id="nameInput" placeholder="Full name">
+    </div>
+
+    <input type="email" id="emailInput" placeholder="Email address">
+    <input type="password" id="passwordInput" placeholder="Password">
+
+    <div id="authError" class="auth-error"></div>
+
+    <button id="submitButton" class="analyze-button">Log In</button>
+
+    <div class="auth-toggle">
+        <span id="toggleText">Don't have an account?</span>
+        <a href="#" id="toggleLink">Sign up</a>
+    </div>
+
+</div>
+
+<script src="auth.js"></script>
+
+</body>
+</html>
