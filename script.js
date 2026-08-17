@@ -72,17 +72,28 @@ function getToken() {
 document.addEventListener("DOMContentLoaded", () => {
 
     // Load saved tasks
-    try {
-        const savedTasks =
-            localStorage.getItem("meetflowTasks");
+try {
+    const savedTasks = localStorage.getItem("meetflowTasks");
 
-        if (savedTasks) {
-            tasks = JSON.parse(savedTasks);
-        }
-    } catch (error) {
-        console.error("Could not load tasks:", error);
+    if (savedTasks) {
+        const parsedTasks = JSON.parse(savedTasks);
+
+        tasks = Array.isArray(parsedTasks)
+            ? parsedTasks
+            : [];
+    } else {
         tasks = [];
     }
+
+} catch (error) {
+
+    console.error(
+        "Could not load tasks:",
+        error
+    );
+
+    tasks = [];
+}
 
     // Load meetings
     loadMeetings();
@@ -785,24 +796,25 @@ async function saveMeeting(title, data) {
         }
 
 
-        /*
-         * Add tasks
-         */
+       /*
+ * Add only new tasks
+ */
 
-        tasks.push(
-            ...items.map(item => ({
+const newTasks = items.map(item => {
 
-                ...(typeof item === "string"
-                    ? { task: item }
-                    : item),
+    const task =
+        typeof item === "string"
+            ? { task: item }
+            : item;
 
-                meeting: title,
+    return {
+        ...task,
+        meeting: title,
+        completed: false
+    };
+});
 
-                completed: false
-
-            }))
-        );
-
+tasks.push(...newTasks);
 
         localStorage.setItem(
             "meetflowTasks",
@@ -1459,7 +1471,15 @@ document
 /* ==========================================
    LOGOUT
 ========================================== */
+function handleTaskChange(event) {
 
+    const checkbox = event.target;
+
+    const index = Number(checkbox.dataset.index);
+
+    if (!tasks[index]) {
+        return;
+    }
 function logout() {
 
     localStorage.removeItem(
