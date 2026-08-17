@@ -1023,16 +1023,38 @@ async function handleDeleteMeeting(event) {
         }
 
 
-        meetings =
-            meetings.filter(
-                meeting =>
-                    meeting.id !== meetingId
-            );
+      // Find the meeting before deleting it
+const deletedMeeting =
+    meetings.find(
+        meeting => meeting.id === meetingId
+    );
 
+// Delete the meeting
+meetings =
+    meetings.filter(
+        meeting =>
+            meeting.id !== meetingId
+    );
 
-        renderMeetings();
+// Delete tasks belonging to that meeting
+if (deletedMeeting) {
 
-        updateStatistics();
+    tasks =
+        tasks.filter(
+            task =>
+                task.meeting !== deletedMeeting.title
+        );
+
+    // Save updated tasks
+    localStorage.setItem(
+        "meetflowTasks",
+        JSON.stringify(tasks)
+    );
+}
+
+renderMeetings();
+
+updateStatistics();zcv  
 
 
         showToast(
