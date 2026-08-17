@@ -1520,3 +1520,4 @@ function logout() {
 
 window.logout =
     logout;
+}
