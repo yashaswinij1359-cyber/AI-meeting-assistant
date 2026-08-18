@@ -2,8 +2,8 @@
    MEETFLOW AI - FRONTEND
 ========================================== */
 
-const API_URL = "http://localhost:5000/api/analyze";
-const MEETINGS_API = "http://localhost:5000/api/meetings";
+const API_URL = "https://ai-meeting-assistant-1-9tid.onrender.com/api/analyze";
+const MEETINGS_API = "https://ai-meeting-assistant-1-9tid.onrender.com/api/meetings";
 
 let meetings = [];
 let tasks = [];
