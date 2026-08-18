@@ -1,9 +1,9 @@
 /* ==========================================
    MEETFLOW AI - FRONTEND
+   (Local-storage version — no backend required)
 ========================================== */
-
-const API_URL = "https://ai-meeting-assistant-1-9tid.onrender.com/api/analyze";
-const MEETINGS_API = "https://ai-meeting-assistant-1-9tid.onrender.com/api/meetings";
+const API_URL = "http://localhost:5000/api/analyze";
+const MEETINGS_API = "http://localhost:5000/api/meetings";
 
 let meetings = [];
 let tasks = [];
@@ -13,56 +13,20 @@ let tasks = [];
    ELEMENTS
 ========================================== */
 
-const meetingTitle =
-    document.getElementById("meetingTitle");
-
-const transcript =
-    document.getElementById("transcript");
-
-const analyzeButton =
-    document.getElementById("analyzeButton");
-
-const buttonText =
-    document.getElementById("buttonText");
-
-const buttonIcon =
-    document.getElementById("buttonIcon");
-
-const clearButton =
-    document.getElementById("clearButton");
-
-const characterCount =
-    document.getElementById("characterCount");
-
-const resultsSection =
-    document.getElementById("results");
-
-const summaryResult =
-    document.getElementById("summaryResult");
-
-const actionItems =
-    document.getElementById("actionItems");
-
-const taskCount =
-    document.getElementById("taskCount");
-
-const recentMeetings =
-    document.getElementById("recentMeetings");
-
-const toast =
-    document.getElementById("toast");
-
-const toastMessage =
-    document.getElementById("toastMessage");
-
-
-/* ==========================================
-   GET LOGIN TOKEN
-========================================== */
-
-function getToken() {
-    return localStorage.getItem("meetflowToken");
-}
+const meetingTitle = document.getElementById("meetingTitle");
+const transcript = document.getElementById("transcript");
+const analyzeButton = document.getElementById("analyzeButton");
+const buttonText = document.getElementById("buttonText");
+const buttonIcon = document.getElementById("buttonIcon");
+const clearButton = document.getElementById("clearButton");
+const characterCount = document.getElementById("characterCount");
+const resultsSection = document.getElementById("results");
+const summaryResult = document.getElementById("summaryResult");
+const actionItems = document.getElementById("actionItems");
+const taskCount = document.getElementById("taskCount");
+const recentMeetings = document.getElementById("recentMeetings");
+const toast = document.getElementById("toast");
+const toastMessage = document.getElementById("toastMessage");
 
 
 /* ==========================================
@@ -72,28 +36,14 @@ function getToken() {
 document.addEventListener("DOMContentLoaded", () => {
 
     // Load saved tasks
-try {
-    const savedTasks = localStorage.getItem("meetflowTasks");
-
-    if (savedTasks) {
-        const parsedTasks = JSON.parse(savedTasks);
-
-        tasks = Array.isArray(parsedTasks)
-            ? parsedTasks
-            : [];
-    } else {
+    try {
+        const savedTasks = localStorage.getItem("meetflowTasks");
+        const parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];
+        tasks = Array.isArray(parsedTasks) ? parsedTasks : [];
+    } catch (error) {
+        console.error("Could not load tasks:", error);
         tasks = [];
     }
-
-} catch (error) {
-
-    console.error(
-        "Could not load tasks:",
-        error
-    );
-
-    tasks = [];
-}
 
     // Load meetings
     loadMeetings();
@@ -109,16 +59,18 @@ try {
 ========================================== */
 
 async function loadMeetings() {
-  try {
-    meetings = JSON.parse(localStorage.getItem('meetings') || '[]');
+    try {
+        const saved = localStorage.getItem("meetflowMeetings");
+        meetings = saved ? JSON.parse(saved) : [];
 
-    renderMeetings();
-    updateStatistics();
+        renderMeetings();
+        updateStatistics();
 
-  } catch (error) {
-    console.error("Load meetings error:", error);
-    showToast("Could not load saved meetings.", "!");
-  }
+    } catch (error) {
+        console.error("Load meetings error:", error);
+        meetings = [];
+        showToast("Could not load saved meetings.", "!");
+    }
 }
 
 
@@ -127,20 +79,10 @@ async function loadMeetings() {
 ========================================== */
 
 if (transcript) {
-
-    transcript.addEventListener(
-        "input",
-        () => {
-
-            const count =
-                transcript.value.length;
-
-            characterCount.textContent =
-                `${count.toLocaleString()} characters`;
-
-        }
-    );
-
+    transcript.addEventListener("input", () => {
+        const count = transcript.value.length;
+        characterCount.textContent = `${count.toLocaleString()} characters`;
+    });
 }
 
 
@@ -149,26 +91,12 @@ if (transcript) {
 ========================================== */
 
 if (clearButton) {
-
-    clearButton.addEventListener(
-        "click",
-        () => {
-
-            meetingTitle.value = "";
-
-            transcript.value = "";
-
-            characterCount.textContent =
-                "0 characters";
-
-            showToast(
-                "Meeting form cleared",
-                "↻"
-            );
-
-        }
-    );
-
+    clearButton.addEventListener("click", () => {
+        meetingTitle.value = "";
+        transcript.value = "";
+        characterCount.textContent = "0 characters";
+        showToast("Meeting form cleared", "↻");
+    });
 }
 
 
@@ -178,145 +106,47 @@ if (clearButton) {
 
 if (analyzeButton) {
 
-    analyzeButton.addEventListener(
-        "click",
-        async () => {
+    analyzeButton.addEventListener("click", async () => {
 
-            const title =
-                meetingTitle.value.trim() ||
-                "Untitled Meeting";
+        const title = meetingTitle.value.trim() || "Untitled Meeting";
+        const text = transcript.value.trim();
 
-            const text =
-                transcript.value.trim();
+        if (!text) {
+            showToast("Please paste a meeting transcript first.", "!");
+            transcript.focus();
+            return;
+        }
 
+        if (text.length < 20) {
+            showToast("Please provide a little more transcript text.", "!");
+            return;
+        }
 
-            if (!text) {
+        setLoading(true);
 
-                showToast(
-                    "Please paste a meeting transcript first.",
-                    "!"
-                );
+        try {
 
-                transcript.focus();
+            // Local analysis (no backend required)
+            const data = localAnalyze(text);
 
-                return;
-            }
+            displayResults(data);
 
+            await saveMeeting(title, data);
 
-            if (text.length < 20) {
+            showToast("Meeting analyzed and saved successfully!", "✓");
 
-                showToast(
-                    "Please provide a little more transcript text.",
-                    "!"
-                );
+        } catch (error) {
 
-                return;
-            }
+            console.error("Analyze error:", error);
+            showToast("Something went wrong analyzing the meeting.", "!");
 
+        } finally {
 
-            setLoading(true);
-
-
-            try {
-
-                const token =
-                    getToken();
-
-
-                const response =
-                    await fetch(
-                        API_URL,
-                        {
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json",
-
-                                "Authorization":
-                                    `Bearer ${token}`
-                            },
-
-                            body: JSON.stringify({
-                                title,
-                                transcript: text
-                            })
-                        }
-                    );
-
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        `Server error: ${response.status}`
-                    );
-
-                }
-
-
-                const data =
-                    await response.json();
-
-
-                displayResults(data);
-
-
-                // Save meeting
-                await saveMeeting(
-                    title,
-                    data
-                );
-
-
-                showToast(
-                    "Meeting analyzed and saved successfully!",
-                    "✓"
-                );
-
-
-            } catch (error) {
-
-                console.error(
-                    "Analyze error:",
-                    error
-                );
-
-
-                /*
-                 * Local fallback
-                 * if AI server is unavailable.
-                 */
-
-                const fallback =
-                    localAnalyze(text);
-
-
-                displayResults(
-                    fallback
-                );
-
-
-                // Try saving fallback result
-                await saveMeeting(
-                    title,
-                    fallback
-                );
-
-
-                showToast(
-                    "Meeting analyzed successfully!",
-                    "✓"
-                );
-
-
-            } finally {
-
-                setLoading(false);
-
-            }
+            setLoading(false);
 
         }
-    );
+
+    });
 
 }
 
@@ -331,27 +161,14 @@ function setLoading(loading) {
         return;
     }
 
-
-    analyzeButton.disabled =
-        loading;
-
+    analyzeButton.disabled = loading;
 
     if (loading) {
-
-        buttonIcon.textContent =
-            "◌";
-
-        buttonText.textContent =
-            "Analyzing meeting...";
-
+        buttonIcon.textContent = "◌";
+        buttonText.textContent = "Analyzing meeting...";
     } else {
-
-        buttonIcon.textContent =
-            "✦";
-
-        buttonText.textContent =
-            "Analyze Meeting";
-
+        buttonIcon.textContent = "✦";
+        buttonText.textContent = "Analyze Meeting";
     }
 
 }
@@ -363,28 +180,16 @@ function setLoading(loading) {
 
 function displayResults(data) {
 
-    resultsSection.classList.remove(
-        "hidden"
-    );
+    resultsSection.classList.remove("hidden");
 
+    summaryResult.textContent = data.summary || "No summary generated.";
 
-    summaryResult.textContent =
-        data.summary ||
-        "No summary generated.";
-
-
-    const items =
-        data.actionItems ||
-        data.action_items ||
-        [];
-
+    const items = data.actionItems || data.action_items || [];
 
     renderActionItems(items);
 
-
     taskCount.textContent =
         `${items.length} task${items.length === 1 ? "" : "s"} identified`;
-
 
     resultsSection.scrollIntoView({
         behavior: "smooth",
@@ -402,97 +207,49 @@ function renderActionItems(items) {
 
     actionItems.innerHTML = "";
 
-
     if (!items || items.length === 0) {
-
         actionItems.innerHTML = `
             <div class="empty-state">
                 No action items were identified.
             </div>
         `;
-
         return;
     }
 
-
     items.forEach((item, index) => {
 
-        const task =
-            typeof item === "string"
-                ? {
-                    task: item,
-                    owner: "Unassigned",
-                    deadline: "Not specified"
-                }
-                : item;
+        const task = typeof item === "string"
+            ? { task: item, owner: "Unassigned", deadline: "Not specified" }
+            : item;
 
-
-        const div =
-            document.createElement("div");
-
-
-        div.className =
-            "task";
-
+        const div = document.createElement("div");
+        div.className = "task";
 
         div.innerHTML = `
-
             <input
                 type="checkbox"
                 class="task-checkbox"
                 data-index="${index}"
+                ${task.completed ? "checked" : ""}
             >
-
             <div class="task-content">
-
                 <strong>
-                    ${escapeHTML(
-                        task.task ||
-                        task.action ||
-                        task.description ||
-                        "Action item"
-                    )}
+                    ${escapeHTML(task.task || task.action || task.description || "Action item")}
                 </strong>
-
                 <div class="task-meta">
-
-                    <span>
-                        👤 ${escapeHTML(
-                            task.owner ||
-                            task.assignee ||
-                            "Unassigned"
-                        )}
-                    </span>
-
-                    <span>
-                        ◷ ${escapeHTML(
-                            task.deadline ||
-                            task.dueDate ||
-                            "Not specified"
-                        )}
-                    </span>
-
+                    <span>👤 ${escapeHTML(task.owner || task.assignee || "Unassigned")}</span>
+                    <span>◷ ${escapeHTML(task.deadline || task.dueDate || "Not specified")}</span>
                 </div>
-
             </div>
         `;
-
 
         actionItems.appendChild(div);
 
     });
 
-
-    document
-        .querySelectorAll(".task-checkbox")
-        .forEach(checkbox => {
-
-            checkbox.addEventListener(
-                "change",
-                handleTaskChange
-            );
-
-        });
+    document.querySelectorAll(".task-checkbox").forEach(checkbox => {
+        checkbox.addEventListener("change", handleTaskChange);
+    });
 
 }
 
@@ -503,59 +260,26 @@ function renderActionItems(items) {
 
 function handleTaskChange(event) {
 
-    const checkbox =
-        event.target;
+    const checkbox = event.target;
+    const index = Number(checkbox.dataset.index);
 
-    const index =
-        Number(
-            checkbox.dataset.index
-        );
-
-
-    if (checkbox.checked) {
-
-        checkbox
-            .closest(".task")
-            .style.opacity = "0.5";
-
-        checkbox
-            .closest(".task")
-            .style.textDecoration =
-            "line-through";
-
-
-        tasks[index] = {
-            ...tasks[index],
-            completed: true
-        };
-
-    } else {
-
-        checkbox
-            .closest(".task")
-            .style.opacity = "1";
-
-        checkbox
-            .closest(".task")
-            .style.textDecoration =
-            "none";
-
-
-        if (tasks[index]) {
-
-            tasks[index].completed =
-                false;
-
-        }
-
+    if (!tasks[index]) {
+        return;
     }
 
+    const row = checkbox.closest(".task");
 
-    localStorage.setItem(
-        "meetflowTasks",
-        JSON.stringify(tasks)
-    );
+    if (checkbox.checked) {
+        row.style.opacity = "0.5";
+        row.style.textDecoration = "line-through";
+        tasks[index] = { ...tasks[index], completed: true };
+    } else {
+        row.style.opacity = "1";
+        row.style.textDecoration = "none";
+        tasks[index].completed = false;
+    }
 
+    localStorage.setItem("meetflowTasks", JSON.stringify(tasks));
 
     updateStatistics();
 
@@ -568,307 +292,90 @@ function handleTaskChange(event) {
 
 async function saveMeeting(title, data) {
 
-    const token =
-        getToken();
-
-
-    const items =
-        data.actionItems ||
-        data.action_items ||
-        [];
-
-
-    /*
-     * If there is no token, do not redirect.
-     * Just keep the analysis on screen.
-     */
-
-    if (!token) {
-
-        console.warn(
-            "No token available. Meeting cannot be saved to server."
-        );
-
-        showToast(
-            "Meeting analyzed, but login token was not found.",
-            "!"
-        );
-
-        return;
-
-    }
-
-
     try {
 
-        const response =
-            await fetch(
-                MEETINGS_API,
-                {
-                    method: "POST",
+        const items = data.actionItems || data.action_items || [];
 
-                    headers: {
-                        "Content-Type":
-                            "application/json",
+        const meeting = {
+            id: Date.now().toString(),
+            title,
+            summary: data.summary || "",
+            actionItems: items,
+            createdAt: new Date().toLocaleString()
+        };
 
-                        "Authorization":
-                            `Bearer ${token}`
-                    },
+        meetings.unshift(meeting);
 
-                    body: JSON.stringify({
+        localStorage.setItem("meetflowMeetings", JSON.stringify(meetings));
 
-                        title,
+        // Add new tasks tied to this meeting
+        const newTasks = items.map(item => {
+            const task = typeof item === "string" ? { task: item } : item;
+            return { ...task, meeting: title, completed: false };
+        });
 
-                        summary:
-                            data.summary || "",
+        tasks.push(...newTasks);
 
-                        actionItems:
-                            items
-
-                    })
-
-                }
-            );
-
-
-        /*
-         * Do not redirect to login.
-         */
-
-        if (response.status === 401) {
-
-            console.error(
-                "Unauthorized: token was rejected."
-            );
-
-            showToast(
-                "Meeting analyzed, but it could not be saved.",
-                "!"
-            );
-
-            return;
-
-        }
-
-
-        const result =
-            await response.json();
-
-
-        if (!response.ok ||
-            !result.success) {
-
-            throw new Error(
-                result.error ||
-                "Failed to save meeting"
-            );
-
-        }
-
-
-        /*
-         * Add meeting to the current page
-         * immediately.
-         */
-
-        const savedMeeting =
-            result.meeting;
-
-
-        if (savedMeeting) {
-
-            meetings.unshift({
-
-                id:
-                    savedMeeting._id,
-
-                title:
-                    savedMeeting.title,
-
-                summary:
-                    savedMeeting.summary,
-
-                actionItems:
-                    savedMeeting.actionItems || items,
-
-                createdAt:
-                    new Date(
-                        savedMeeting.createdAt
-                    ).toLocaleString()
-
-            });
-
-        } else {
-
-            /*
-             * If backend does not return
-             * the saved meeting, reload them.
-             */
-
-            await loadMeetings();
-
-        }
-
-
-       /*
- * Add only new tasks
- */
-
-const newTasks = items.map(item => {
-
-    const task =
-        typeof item === "string"
-            ? { task: item }
-            : item;
-
-    return {
-        ...task,
-        meeting: title,
-        completed: false
-    };
-});
-
-tasks.push(...newTasks);
-
-        localStorage.setItem(
-            "meetflowTasks",
-            JSON.stringify(tasks)
-        );
-
+        localStorage.setItem("meetflowTasks", JSON.stringify(tasks));
 
         renderMeetings();
-
         updateStatistics();
-
 
     } catch (error) {
 
-        console.error(
-            "Save meeting error:",
-            error
-        );
-
-        /*
-         * IMPORTANT:
-         * Do NOT go to login.html here.
-         */
-
-        showToast(
-            "Meeting analyzed, but could not be saved.",
-            "!"
-        );
+        console.error("Save meeting error:", error);
+        showToast("Meeting analyzed, but could not be saved.", "!");
 
     }
 
 }
-/*
-MEETINGS
+
+
+/* ==========================================
+   RENDER MEETINGS
 ========================================== */
 
 function renderMeetings() {
 
     if (!meetings.length) {
-
         recentMeetings.innerHTML = `
-
             <div class="empty-meetings">
-
-                <div class="empty-icon">
-                    ◫
-                </div>
-
+                <div class="empty-icon">◫</div>
                 <h3>No meetings yet</h3>
-
-                <p>
-                    Analyze your first meeting
-                    to see it here.
-                </p>
-
-                <button
-                    class="small-button"
-                    onclick="scrollToMeeting()">
-
+                <p>Analyze your first meeting to see it here.</p>
+                <button class="small-button" onclick="scrollToMeeting()">
                     Start your first meeting
-
                 </button>
-
             </div>
         `;
-
         return;
     }
 
-
     recentMeetings.innerHTML = "";
-
 
     meetings.forEach(meeting => {
 
-        const row =
-            document.createElement("div");
-
-
-        row.className =
-            "meeting-row";
-
+        const row = document.createElement("div");
+        row.className = "meeting-row";
 
         row.innerHTML = `
-
-            <div class="meeting-icon">
-                ✦
-            </div>
-
+            <div class="meeting-icon">✦</div>
             <div>
-
-                <strong>
-                    ${escapeHTML(
-                        meeting.title
-                    )}
-                </strong>
-
-                <p>
-             async function saveMeeting(title, data) {
-  try {
-    const meeting = {
-      id: Date.now().toString(),
-      title,
-      data,
-      tasks: data.tasks || [],
-      createdAt: new Date().toISOString()
-    };
-
-    meetings.push(meeting);
-    localStorage.setItem('meetings', JSON.stringify(meetings));
-
-    renderMeetings();
-    updateStatistics();
-
-  } catch (error) {
-    console.error("Save meeting error:", error);
-    showToast("Meeting analyzed, but could not be saved.", "!");
-  }
-}       
+                <strong>${escapeHTML(meeting.title)}</strong>
+                <p>${escapeHTML(meeting.createdAt || "")} · ${(meeting.actionItems || []).length} tasks</p>
+            </div>
+            <button class="delete-meeting-btn" data-id="${meeting.id}">
+                🗑
             </button>
         `;
-
 
         recentMeetings.appendChild(row);
 
     });
 
-
-    document
-        .querySelectorAll(
-            ".delete-meeting-btn"
-        )
-        .forEach(btn => {
-
-            btn.addEventListener(
-                "click",
-                handleDeleteMeeting
-            );
-
-        });
+    document.querySelectorAll(".delete-meeting-btn").forEach(btn => {
+        btn.addEventListener("click", handleDeleteMeeting);
+    });
 
 }
 
@@ -877,115 +384,36 @@ function renderMeetings() {
    DELETE MEETING
 ========================================== */
 
-async function handleDeleteMeeting(event) {
+function handleDeleteMeeting(event) {
 
-    const button =
-        event.currentTarget;
-
-    const meetingId =
-        button.dataset.id;
-
+    const button = event.currentTarget;
+    const meetingId = button.dataset.id;
 
     if (!meetingId) {
         return;
     }
 
-
-    const token =
-        getToken();
-
-
-    if (!token) {
-
-        showToast(
-            "Login token not found.",
-            "!"
-        );
-
-        return;
-
-    }
-
-
     try {
 
-        const token = localStorage.getItem("token"); // Ensures logged-in user's token is passed
+        const deletedMeeting = meetings.find(meeting => meeting.id === meetingId);
 
-const response = await fetch(MEETINGS_API, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${token}`
-  },
-  body: JSON.stringify(meetingData)
-});
+        meetings = meetings.filter(meeting => meeting.id !== meetingId);
+        localStorage.setItem("meetflowMeetings", JSON.stringify(meetings));
 
-        const result =
-            await response.json();
-
-
-        if (!response.ok ||
-            !result.success) {
-
-            throw new Error(
-                result.error ||
-                "Could not delete meeting"
-            );
-
+        if (deletedMeeting) {
+            tasks = tasks.filter(task => task.meeting !== deletedMeeting.title);
+            localStorage.setItem("meetflowTasks", JSON.stringify(tasks));
         }
 
+        renderMeetings();
+        updateStatistics();
 
-      // Find the meeting before deleting it
-const deletedMeeting =
-    meetings.find(
-        meeting => meeting.id === meetingId
-    );
-
-// Delete the meeting
-meetings =
-    meetings.filter(
-        meeting =>
-            meeting.id !== meetingId
-    );
-
-// Delete tasks belonging to that meeting
-if (deletedMeeting) {
-
-    tasks =
-        tasks.filter(
-            task =>
-                task.meeting !== deletedMeeting.title
-        );
-
-    // Save updated tasks
-    localStorage.setItem(
-        "meetflowTasks",
-        JSON.stringify(tasks)
-    );
-}
-
-renderMeetings();
-
-updateStatistics();zcv  
-
-
-        showToast(
-            "Meeting deleted.",
-            "✓"
-        );
-
+        showToast("Meeting deleted.", "✓");
 
     } catch (error) {
 
-        console.error(
-            "Delete meeting error:",
-            error
-        );
-
-        showToast(
-            "Could not delete meeting.",
-            "!"
-        );
+        console.error("Delete meeting error:", error);
+        showToast("Could not delete meeting.", "!");
 
     }
 
@@ -998,153 +426,69 @@ updateStatistics();zcv
 
 function updateStatistics() {
 
-    const meetingCount =
-        document.getElementById(
-            "meetingCount"
-        );
-
-    const analysisCount =
-        document.getElementById(
-            "analysisCount"
-        );
-
-    const completedCount =
-        document.getElementById(
-            "completedCount"
-        );
-
-    const pendingCount =
-        document.getElementById(
-            "pendingCount"
-        );
-
+    const meetingCount = document.getElementById("meetingCount");
+    const analysisCount = document.getElementById("analysisCount");
+    const completedCount = document.getElementById("completedCount");
+    const pendingCount = document.getElementById("pendingCount");
 
     if (meetingCount) {
-
-        meetingCount.textContent =
-            meetings.length;
-
+        meetingCount.textContent = meetings.length;
     }
-
 
     if (analysisCount) {
-
-        analysisCount.textContent =
-            meetings.length;
-
+        analysisCount.textContent = meetings.length;
     }
 
-
-    const completed =
-        tasks.filter(
-            task =>
-                task.completed
-        ).length;
-
-
-    const pending =
-        tasks.length -
-        completed;
-
+    const completed = tasks.filter(task => task.completed).length;
+    const pending = tasks.length - completed;
 
     if (completedCount) {
-
-        completedCount.textContent =
-            completed;
-
+        completedCount.textContent = completed;
     }
 
-
     if (pendingCount) {
-
-        pendingCount.textContent =
-            pending;
-
+        pendingCount.textContent = pending;
     }
 
 }
 
 
 /* ==========================================
-   LOCAL FALLBACK ANALYZER
+   LOCAL ANALYZER
 ========================================== */
 
 function localAnalyze(text) {
 
-    const sentences =
-        text
-            .split(/[.!?\n]+/)
-            .map(s => s.trim())
-            .filter(Boolean);
-
+    const sentences = text
+        .split(/[.!?\n]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
 
     const actionItems = [];
 
+    sentences.forEach(sentence => {
 
-    sentences.forEach(
-        sentence => {
+        const lower = sentence.toLowerCase();
 
-            const lower =
-                sentence.toLowerCase();
+        const actionWords = [
+            "will", "should", "need to", "needs to", "must",
+            "complete", "review", "finish", "prepare",
+            "send", "create", "update", "test", "launch", "design"
+        ];
 
-
-            const actionWords = [
-
-                "will",
-                "should",
-                "need to",
-                "needs to",
-                "must",
-                "complete",
-                "review",
-                "finish",
-                "prepare",
-                "send",
-                "create",
-                "update",
-                "test",
-                "launch",
-                "design"
-
-            ];
-
-
-            if (
-                actionWords.some(
-                    word =>
-                        lower.includes(word)
-                )
-            ) {
-
-                actionItems.push({
-
-                    task: sentence,
-
-                    owner:
-                        findOwner(sentence),
-
-                    deadline:
-                        findDeadline(sentence)
-
-                });
-
-            }
-
+        if (actionWords.some(word => lower.includes(word))) {
+            actionItems.push({
+                task: sentence,
+                owner: findOwner(sentence),
+                deadline: findDeadline(sentence)
+            });
         }
-    );
 
+    });
 
     return {
-
-        summary:
-            sentences
-                .slice(0, 3)
-                .join(". ") +
-            (sentences.length ? "." : ""),
-
-        actionItems:
-            actionItems.slice(0, 10)
-
+        summary: sentences.slice(0, 3).join(". ") + (sentences.length ? "." : ""),
+        actionItems: actionItems.slice(0, 10)
     };
 
 }
@@ -1155,17 +499,8 @@ function localAnalyze(text) {
 ========================================== */
 
 function findOwner(sentence) {
-
-    const match =
-        sentence.match(
-            /\b([A-Z][a-z]{2,})\b/
-        );
-
-
-    return match
-        ? match[1]
-        : "Unassigned";
-
+    const match = sentence.match(/\b([A-Z][a-z]{2,})\b/);
+    return match ? match[1] : "Unassigned";
 }
 
 
@@ -1176,36 +511,15 @@ function findOwner(sentence) {
 function findDeadline(sentence) {
 
     const patterns = [
-
-        "today",
-        "tomorrow",
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-        "saturday",
-        "sunday",
-        "this week",
-        "next week"
-
+        "today", "tomorrow", "monday", "tuesday", "wednesday",
+        "thursday", "friday", "saturday", "sunday",
+        "this week", "next week"
     ];
 
+    const lower = sentence.toLowerCase();
+    const found = patterns.find(item => lower.includes(item));
 
-    const lower =
-        sentence.toLowerCase();
-
-
-    const found =
-        patterns.find(
-            item =>
-                lower.includes(item)
-        );
-
-
-    return found
-        ? capitalize(found)
-        : "Not specified";
+    return found ? capitalize(found) : "Not specified";
 
 }
 
@@ -1215,74 +529,36 @@ function findDeadline(sentence) {
 ========================================== */
 
 function scrollToMeeting() {
-
-    const section =
-        document.getElementById(
-            "new-meeting"
-        );
-
-
+    const section = document.getElementById("new-meeting");
     if (section) {
-
-        section.scrollIntoView({
-            behavior: "smooth"
-        });
-
+        section.scrollIntoView({ behavior: "smooth" });
     }
-
 }
 
-
-window.scrollToMeeting =
-    scrollToMeeting;
+window.scrollToMeeting = scrollToMeeting;
 
 
 /* ==========================================
    TOAST
 ========================================== */
 
-function showToast(
-    message,
-    icon = "✓"
-) {
+function showToast(message, icon = "✓") {
 
-    const toastIcon =
-        document.getElementById(
-            "toastIcon"
-        );
-
+    const toastIcon = document.getElementById("toastIcon");
 
     if (toastIcon) {
-
-        toastIcon.textContent =
-            icon;
-
+        toastIcon.textContent = icon;
     }
-
 
     if (toastMessage) {
-
-        toastMessage.textContent =
-            message;
-
+        toastMessage.textContent = message;
     }
 
-
     if (toast) {
-
-        toast.classList.add(
-            "show"
-        );
-
-
+        toast.classList.add("show");
         setTimeout(() => {
-
-            toast.classList.remove(
-                "show"
-            );
-
+            toast.classList.remove("show");
         }, 3000);
-
     }
 
 }
@@ -1293,34 +569,12 @@ function showToast(
 ========================================== */
 
 function escapeHTML(value) {
-
     return String(value)
-
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
@@ -1329,12 +583,7 @@ function escapeHTML(value) {
 ========================================== */
 
 function capitalize(value) {
-
-    return value
-        .charAt(0)
-        .toUpperCase() +
-        value.slice(1);
-
+    return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 
@@ -1342,30 +591,13 @@ function capitalize(value) {
    THEME BUTTON
 ========================================== */
 
-const themeButton =
-    document.getElementById(
-        "themeButton"
-    );
-
+const themeButton = document.getElementById("themeButton");
 
 if (themeButton) {
-
-    themeButton.addEventListener(
-        "click",
-        () => {
-
-            document.body.classList.toggle(
-                "dark-mode"
-            );
-
-            showToast(
-                "Theme preference changed",
-                "◐"
-            );
-
-        }
-    );
-
+    themeButton.addEventListener("click", () => {
+        document.body.classList.toggle("dark-mode");
+        showToast("Theme preference changed", "◐");
+    });
 }
 
 
@@ -1373,63 +605,20 @@ if (themeButton) {
    NAV ACTIVE STATE
 ========================================== */
 
-document
-    .querySelectorAll(".nav-link")
-    .forEach(link => {
-
-        link.addEventListener(
-            "click",
-            () => {
-
-                document
-                    .querySelectorAll(
-                        ".nav-link"
-                    )
-                    .forEach(item =>
-                        item.classList.remove(
-                            "active"
-                        )
-                    );
-
-
-                link.classList.add(
-                    "active"
-                );
-
-            }
-        );
-
+document.querySelectorAll(".nav-link").forEach(link => {
+    link.addEventListener("click", () => {
+        document.querySelectorAll(".nav-link").forEach(item => item.classList.remove("active"));
+        link.classList.add("active");
     });
-
-
+});
 /* ==========================================
    LOGOUT
 ========================================== */
-function handleTaskChange(event) {
 
-    const checkbox = event.target;
-
-    const index = Number(checkbox.dataset.index);
-
-    if (!tasks[index]) {
-        return;
-    }
 function logout() {
-
-    localStorage.removeItem(
-        "meetflowToken"
-    );
-
-    localStorage.removeItem(
-        "meetflowUser"
-    );
-
-    window.location.href =
-        "login.html";
-
+    localStorage.removeItem("meetflowToken");
+    localStorage.removeItem("meetflowUser");
+    window.location.href = "login.html";
 }
 
-
-window.logout =
-    logout;
-}
+window.logout = logout;
