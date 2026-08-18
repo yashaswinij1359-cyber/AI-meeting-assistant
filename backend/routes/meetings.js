@@ -38,32 +38,25 @@ router.get("/", async (req, res) => {
    SAVE A NEW MEETING
 ========================================== */
 
+// ADD THIS BLOCK BEFORE module.exports = router;
 router.post("/", async (req, res) => {
+  try {
+    const { title, transcript, summary, actionItems } = req.body;
 
-    try {
+    const newMeeting = new Meeting({
+      user: req.userId,
+      title,
+      transcript,
+      summary,
+      actionItems
+    });
 
-        const { title, summary, actionItems } = req.body;
-
-        const meeting = await Meeting.create({
-            user: req.userId,
-            title,
-            summary,
-            actionItems
-        });
-
-        res.status(201).json({ success: true, meeting });
-
-    } catch (error) {
-
-        console.error("Save meeting error:", error);
-
-        res.status(500).json({
-            success: false,
-            error: "Unable to save meeting."
-        });
-
-    }
-
+    await newMeeting.save();
+    res.status(201).json({ success: true, meeting: newMeeting });
+  } catch (error) {
+    console.error("Save meeting error:", error);
+    res.status(500).json({ success: false, error: "Unable to save meeting." });
+  }
 });
 
 /* ==========================================

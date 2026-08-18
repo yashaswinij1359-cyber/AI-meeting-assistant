@@ -109,102 +109,16 @@ try {
 ========================================== */
 
 async function loadMeetings() {
+  try {
+    meetings = JSON.parse(localStorage.getItem('meetings') || '[]');
 
-    const token = getToken();
+    renderMeetings();
+    updateStatistics();
 
-    // Do NOT redirect to login from here.
-    // Just keep the user on the homepage.
-    if (!token) {
-        console.warn("No login token found.");
-        meetings = [];
-        renderMeetings();
-        updateStatistics();
-        return;
-    }
-
-    try {
-
-        const response =
-            await fetch(MEETINGS_API, {
-                method: "GET",
-
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-
-
-        if (response.status === 401) {
-
-            console.warn(
-                "Server rejected the login token."
-            );
-
-            showToast(
-                "Your login session has expired. Please login again.",
-                "!"
-            );
-
-            return;
-        }
-
-
-        const data =
-            await response.json();
-
-
-        if (!response.ok || !data.success) {
-
-            throw new Error(
-                data.error ||
-                "Failed to load meetings"
-            );
-
-        }
-
-
-        meetings =
-            (data.meetings || []).map(m => ({
-
-                id: m._id,
-
-                title: m.title,
-
-                summary: m.summary,
-
-                actionItems:
-                    m.actionItems || [],
-
-                createdAt:
-                    new Date(
-                        m.createdAt
-                    ).toLocaleString()
-
-            }));
-
-
-        renderMeetings();
-
-        updateStatistics();
-
-
-    } catch (error) {
-
-        console.error(
-            "Load meetings error:",
-            error
-        );
-
-        // IMPORTANT:
-        // Do NOT redirect to login.
-        showToast(
-            "Could not load saved meetings.",
-            "!"
-        );
-
-    }
-
+  } catch (error) {
+    console.error("Load meetings error:", error);
+    showToast("Could not load saved meetings.", "!");
+  }
 }
 
 
@@ -913,26 +827,27 @@ function renderMeetings() {
                 </strong>
 
                 <p>
-                    ${(meeting.actionItems || []).length}
-                    action items •
-                    ${escapeHTML(
-                        meeting.createdAt
-                    )}
-                </p>
+             async function saveMeeting(title, data) {
+  try {
+    const meeting = {
+      id: Date.now().toString(),
+      title,
+      data,
+      tasks: data.tasks || [],
+      createdAt: new Date().toISOString()
+    };
 
-            </div>
+    meetings.push(meeting);
+    localStorage.setItem('meetings', JSON.stringify(meetings));
 
-            <span class="meeting-status">
-                Analyzed
-            </span>
+    renderMeetings();
+    updateStatistics();
 
-            <button
-                class="delete-meeting-btn"
-                data-id="${meeting.id}"
-                title="Delete meeting">
-
-                🗑
-
+  } catch (error) {
+    console.error("Save meeting error:", error);
+    showToast("Meeting analyzed, but could not be saved.", "!");
+  }
+}       
             </button>
         `;
 
@@ -994,19 +909,16 @@ async function handleDeleteMeeting(event) {
 
     try {
 
-        const response =
-            await fetch(
-                `${MEETINGS_API}/${meetingId}`,
-                {
-                    method: "DELETE",
+        const token = localStorage.getItem("token"); // Ensures logged-in user's token is passed
 
-                    headers: {
-                        "Authorization":
-                            `Bearer ${token}`
-                    }
-                }
-            );
-
+const response = await fetch(MEETINGS_API, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`
+  },
+  body: JSON.stringify(meetingData)
+});
 
         const result =
             await response.json();
